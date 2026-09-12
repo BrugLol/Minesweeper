@@ -8,7 +8,6 @@ using namespace std;
 
 random_device rd;
 mt19937 gen(rd());
-uniform_int_distribution<int> dist(0, 8); // Initializes the random
 
 //Color variables
 #define RED     "\033[31m"// Selected && Error
@@ -24,6 +23,21 @@ void GenerateBoard(vector<vector <char>>& board, int size_x, int size_y) { //Cre
     for (int col = 0; col < size_y; col++) {
         board.push_back(vector<char>(size_x, '#'));
     }
+}
+
+bool HasWon(vector<vector <char>>& board) {
+    //Loops through the hidden board
+    for (int col = 0; col < board.size(); col++) {
+        for (int row = 0; row < board[col].size(); row++) { 
+            if (board[col][row] == '#') { //If it still has an empty square then return false
+                return false;
+            }
+        }
+    }
+
+
+
+    return true;
 }
 
 void Move(vector<vector <char>>& board, char direction, int& selected_x, int& selected_y, int boardx, int boardy) {
@@ -88,7 +102,7 @@ int LocateMines(vector<vector <char>>& board, int row, int col, int boardx, int 
     return v;
 }
 
-void Reveal(vector<vector <char>>& board,vector<vector <char>>& Pboard, int selected_x, int selected_y, bool& alive, int bx, int by) {
+void Reveal(vector<vector <char>>& board,vector<vector <char>>& Pboard, int selected_x, int selected_y, bool& alive, int bx, int by, int& af) {
     char x = '0';
 
     vector<pair<int, int>> Position = {
@@ -97,7 +111,10 @@ void Reveal(vector<vector <char>>& board,vector<vector <char>>& Pboard, int sele
         {+1, -1},  {+1, 0},  {+1, +1},
     };
 
-    
+    if (Pboard[selected_y][selected_x] == 'F') {
+        Pboard[selected_y][selected_x] = '*';
+        af++;
+    }
 
     if (Pboard[selected_y][selected_x] != '*') {
         return;
@@ -109,9 +126,11 @@ void Reveal(vector<vector <char>>& board,vector<vector <char>>& Pboard, int sele
 
         alive = false;
         return;
+
     } else {
         x = x + LocateMines(board, selected_x, selected_y, bx, by);
         Pboard[selected_y][selected_x] = x;
+        board[selected_y][selected_x] = x;
 
         if (x == '0') {
             for (int i = 0; i < Position.size(); i++) {
@@ -120,7 +139,7 @@ void Reveal(vector<vector <char>>& board,vector<vector <char>>& Pboard, int sele
 
                 
                 if (new_x >= 0 && new_x < bx && new_y >= 0 && new_y < by) {
-                    Reveal(board, Pboard, new_x, new_y, alive, bx, by);
+                    Reveal(board, Pboard, new_x, new_y, alive, bx, by, af);
                 }
             }
         }
@@ -131,16 +150,19 @@ void Reveal(vector<vector <char>>& board,vector<vector <char>>& Pboard, int sele
     
 }
 
-void GenerateMines(vector<vector <char>>& board, int target) {
+void GenerateMines(vector<vector <char>>& board, int target, int boardx, int boardy) {
     //Initializes a random position;
     int random_x;
     int random_y;
 
+    uniform_int_distribution<int> distx(0, boardx-1); //Initializes the random distance;
+    uniform_int_distribution<int> disty(0, boardy-1);
+
     int amount_mines_placed = 0; // Condition
 
     while (amount_mines_placed < target) { // Target being amount_of_mines
-        random_x = dist(gen);
-        random_y = dist(gen);
+        random_x = distx(gen);
+        random_y = disty(gen);
 
         if (board[random_y][random_x] == '#') {
             board[random_y][random_x] = '@'; // Turns the empty space into a mine.
@@ -187,8 +209,13 @@ void DrawBoard(vector<vector <char>>& board, int selected_x, int selected_y) { /
         for (int row = 0; row < board[col].size(); row++) {
             
             if (col == selected_y && row == selected_x) {
+                std::cout << RED << board[col][row] << RESET; //Selected Piece
+            } else if (board[col][row] == 'F') { //Flags
                 std::cout << RED << board[col][row] << RESET;
-            } else if (board[col][row] == '1') {
+            }
+
+            //Displays for every number
+            else if (board[col][row] == '1') {
                 std::cout << GREEN << board[col][row] << RESET;
             } else if (board[col][row] == '2') {
                 std::cout << YELLOW << board[col][row] << RESET;
@@ -240,10 +267,12 @@ int main() {
 
         amount_of_mines = 10;
         amount_of_flags = amount_of_mines;
+    } else {
+        return 0;
     }
 
     GenerateBoard(board, board_size_x, board_size_y);
-    GenerateMines(board, amount_of_mines);
+    GenerateMines(board, amount_of_mines, board_size_x, board_size_y);
 
 
     PlayerBoard = board;
@@ -273,20 +302,31 @@ int main() {
             PlacesFlag(PlayerBoard, selected_x, selected_y, amount_of_flags);
 
         } else if (action == 'L') { // Actions digs
-            Reveal(board, PlayerBoard, selected_x, selected_y, IsAlive, board_size_x, board_size_y);
+            Reveal(board, PlayerBoard, selected_x, selected_y, IsAlive, board_size_x, board_size_y, amount_of_flags);
 
         } else {
             std::cout << RED << "THIS ACTION DOES NOT EXIST" << RESET; //Gives a fake error if the action does not exist
-            Sleep(2500);
+            Sleep(2000);
+        }
+
+
+        if (HasWon(board)) {
+            break;
         }
 
         
     }
 
-
-    std::cout << "\nGAME OVER! \n";
-    std::cout << "Project built by: Anastacio.\n";
-    std::cout << "Thank you for playing!";
+    if (IsAlive == false) { //HasLost
+        std::cout << "\nGAME OVER! \n";
+        std::cout << "Project built by: Anastacio.\n";
+        std::cout << "Thank you for playing!";
+    } else { //HasWon
+        std::cout << "\n YOU WON! \n";
+        std::cout << "Project built by Anastacio";
+        std::cout << "Thanks for playing!";
+    }
+    
 
 
     std::cin.get();
