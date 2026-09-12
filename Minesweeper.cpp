@@ -15,8 +15,14 @@ mt19937 gen(rd());
 #define YELLOW  "\033[33m"// 2
 #define BLUE    "\033[34m"// 3
 #define MAGENTA "\033[35m"// 4
-#define CYAN    "\033[36m"// 5-8
+#define CYAN    "\033[36m"// 5
 #define WHITE   "\033[37m" // 0
+#define ORANGE      "\033[38;5;208m" // 6
+#define PINK        "\033[38;5;205m" // 7
+#define PURPLE      "\033[38;5;129m" // 8
+#define GOLD        "\033[38;5;220m"
+#define BROWN       "\033[38;5;130m"
+#define GRAY        "\033[38;5;245m" // Flag
 #define RESET   "\033[0m"
 
 void GenerateBoard(vector<vector <char>>& board, int size_x, int size_y) { //Creates playable board depending on size
@@ -211,7 +217,7 @@ void DrawBoard(vector<vector <char>>& board, int selected_x, int selected_y) { /
             if (col == selected_y && row == selected_x) {
                 std::cout << RED << board[col][row] << RESET; //Selected Piece
             } else if (board[col][row] == 'F') { //Flags
-                std::cout << RED << board[col][row] << RESET;
+                std::cout << GRAY << board[col][row] << RESET;
             }
 
             //Displays for every number
@@ -223,9 +229,17 @@ void DrawBoard(vector<vector <char>>& board, int selected_x, int selected_y) { /
                 std::cout << BLUE << board[col][row] << RESET;
             } else if (board[col][row] == '4') {
                 std::cout << MAGENTA << board[col][row] << RESET;
-            } else if (board[col][row] >= '5' && board[col][row] <= '8') {
+            } else if (board[col][row] == '5') {
                 std::cout << CYAN << board[col][row] << RESET;
-            } else {
+            } else if (board[col][row] == '6') {
+                std::cout << ORANGE << board[col][row] << RESET;
+            } else if (board[col][row] == '7') {
+                std::cout << PINK << board[col][row] << RESET;
+            } else if (board[col][row] == '8') {
+                std::cout << PURPLE << board[col][row] << RESET;
+            }
+            
+            else {
                 std::cout << board[col][row];
             }
         
@@ -267,7 +281,21 @@ int main() {
 
         amount_of_mines = 10;
         amount_of_flags = amount_of_mines;
-    } else {
+    } else if (Difficulty == 'm') {
+        board_size_x = 16;
+        board_size_y = 16;
+
+        amount_of_mines = 40;
+        amount_of_flags = amount_of_mines;
+    } else if (Difficulty == 'h') {
+        board_size_x = 30;
+        board_size_y = 16;
+
+        amount_of_mines = 99;
+        amount_of_flags = amount_of_mines;
+    }
+    
+    else {
         return 0;
     }
 
@@ -323,7 +351,7 @@ int main() {
         std::cout << "Thank you for playing!";
     } else { //HasWon
         std::cout << "\n YOU WON! \n";
-        std::cout << "Project built by Anastacio";
+        std::cout << "Project built by Anastacio\n";
         std::cout << "Thanks for playing!";
     }
     
